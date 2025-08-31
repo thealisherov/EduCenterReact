@@ -9,11 +9,6 @@ import Results from './Components/Home/Results'
 import AdminDashboard from './Components/Admin/AdminDashboard'
 import LoginModal from './Components/Admin/LoginModal'
 import { AuthProvider } from './hooks/useAuth'
-import { BrowserRouter as Router } from 'react-router-dom';
-import About from './Components/Home/About';
-import Courses from './Components/Home/Courses';
-import { AuthProvider } from './hooks/useAuth';
-import AdminDashboard from './Components/Admin/AdminDashboard';
 function App() {
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showAdminPanel, setShowAdminPanel] = useState(false)

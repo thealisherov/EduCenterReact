@@ -1,98 +1,175 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
+import { X, BookOpen, Users, Trophy, Plus, Edit, Trash2, Upload } from 'lucide-react'
+import { useAuth } from '../../hooks/useAuth'
+import { supabase } from '../../services/supabase'
+import Navbar from '../Layouts/Navbar'
+import CourseManager from './CourseManager'
+import TeacherManager from './TeacherManager'
+import ResultManager from './ResultManager'
 
-const LoginModal = ({ isOpen, onClose }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  
-  const { signIn } = useAuth();
+const AdminDashboard = ({ onClose }) => {
+  const [activeTab, setActiveTab] = useState('courses')
+  const [courses, setCourses] = useState([])
+  const [teachers, setTeachers] = useState([])
+  const [results, setResults] = useState([])
+  const [loading, setLoading] = useState(true)
+  const { user, isAdmin, signOut } = useAuth()
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+  const navItems = [
+    { key: 'courses', label: 'Kurslar', icon: BookOpen },
+    { key: 'teachers', label: "O'qituvchilar", icon: Users },
+    { key: 'results', label: 'Natijalar', icon: Trophy }
+  ]
 
-    const { data, error: signInError } = await signIn(email, password);
-    
-    if (signInError) {
-      setError(signInError.message);
-    } else {
-      onClose();
-      setEmail('');
-      setPassword('');
+  useEffect(() => {
+    if (user && isAdmin()) {
+      fetchAllData()
     }
-    
-    setLoading(false);
-  };
+  }, [user])
 
-  if (!isOpen) return null;
+  const fetchAllData = async () => {
+    setLoading(true)
+    await Promise.all([
+      fetchCourses(),
+      fetchTeachers(),
+      fetchResults()
+    ])
+    setLoading(false)
+  }
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Tizimga kirish</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <X className="h-6 w-6" />
+  const fetchCourses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('courses')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      if (!error) {
+        setCourses(data || [])
+      }
+    } catch (err) {
+      console.error('Courses fetch error:', err)
+    }
+  }
+
+  const fetchTeachers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('teachers')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      if (!error) {
+        setTeachers(data || [])
+      }
+    } catch (err) {
+      console.error('Teachers fetch error:', err)
+    }
+  }
+
+  const fetchResults = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('results')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      if (!error) {
+        setResults(data || [])
+      }
+    } catch (err) {
+      console.error('Results fetch error:', err)
+    }
+  }
+
+  if (!user || !isAdmin()) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-8 text-center">
+          <h2 className="text-xl font-bold text-red-600 mb-4">Ruxsat yo'q</h2>
+          <p className="mb-4">Sizda admin huquqlari yo'q.</p>
+          <button
+            onClick={onClose}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          >
+            Orqaga
           </button>
         </div>
-        
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-          
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Parol
-            </label>
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-2.5 text-gray-500"
-              >
-                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-              </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="fixed inset-0 bg-gray-100 z-50 overflow-y-auto">
+      <div className="min-h-full">
+        {/* Header */}
+        <div className="bg-white shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-4">
+              <h1 className="text-2xl font-bold text-gray-900">Admin Panel</h1>
+              <div className="flex items-center space-x-4">
+                <span className="text-sm text-gray-600">
+                  Xush kelibsiz, {user.email}
+                </span>
+                <button
+                  onClick={signOut}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  Chiqish
+                </button>
+                <button
+                  onClick={onClose}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
             </div>
           </div>
-          
-          {error && (
-            <div className="mb-4 text-red-600 text-sm">
-              {error}
+        </div>
+
+        {/* Navigation */}
+        <Navbar
+          items={navItems}
+          activeItem={activeTab}
+          onItemClick={setActiveTab}
+          className="border-b"
+        />
+
+        {/* Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
             </div>
+          ) : (
+            <>
+              {activeTab === 'courses' && (
+                <CourseManager 
+                  courses={courses} 
+                  onUpdate={fetchCourses} 
+                />
+              )}
+              
+              {activeTab === 'teachers' && (
+                <TeacherManager 
+                  teachers={teachers} 
+                  onUpdate={fetchTeachers} 
+                />
+              )}
+              
+              {activeTab === 'results' && (
+                <ResultManager 
+                  results={results} 
+                  onUpdate={fetchResults} 
+                />
+              )}
+            </>
           )}
-          
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? 'Kirish...' : 'Kirish'}
-          </button>
-        </form>
+        </div>
       </div>
     </div>
-  );
-};
-
+  )
+}
 
 export default AdminDashboard

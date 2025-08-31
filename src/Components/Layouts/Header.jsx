@@ -1,9 +1,10 @@
-import React from 'react'
-import { useAuth } from '../../hooks/useAuth';
-import Navbar from './Navbar';
-const Header = () => {
-  const { user, isAdmin, signOut } = useAuth();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+import React, { useState } from 'react'
+import { BookOpen, Shield, Menu, X } from 'lucide-react'
+import { useAuth } from '../../hooks/useAuth'
+
+const Header = ({ onLoginClick, onAdminClick }) => {
+  const { user, isAdmin, signOut } = useAuth()
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
     <header className="bg-white shadow-lg">
@@ -23,7 +24,10 @@ const Header = () => {
 
           <div className="flex items-center space-x-4">
             {user && isAdmin() && (
-              <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+              <button 
+                onClick={onAdminClick}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+              >
                 <Shield className="h-4 w-4 inline mr-1" />
                 Admin Panel
               </button>
@@ -36,7 +40,10 @@ const Header = () => {
                 Chiqish
               </button>
             ) : (
-              <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+              <button 
+                onClick={onLoginClick}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              >
                 Kirish
               </button>
             )}
@@ -62,8 +69,7 @@ const Header = () => {
         )}
       </div>
     </header>
-  );
-};
-
+  )
+}
 
 export default Header

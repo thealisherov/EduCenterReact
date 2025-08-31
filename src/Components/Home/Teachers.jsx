@@ -1,31 +1,31 @@
-import React from 'react'
-import { useEffect, useState } from 'react';
-import { teachersAPI } from '../../services/api';
-import Card from '../UI/Card';
+import React, { useState, useEffect } from 'react'
+import { supabase } from '../../services/supabase'
+import Card from '../UI/Card'
+
 const Teachers = () => {
-  const [teachers, setTeachers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [teachers, setTeachers] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchTeachers();
-  }, []);
+    fetchTeachers()
+  }, [])
 
   const fetchTeachers = async () => {
     try {
       const { data, error } = await supabase
         .from('teachers')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
       
       if (!error) {
-        setTeachers(data || []);
+        setTeachers(data || [])
       }
     } catch (err) {
-      console.error('Teachers fetch error:', err);
+      console.error('Teachers fetch error:', err)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   if (loading) {
     return (
@@ -36,7 +36,7 @@ const Teachers = () => {
           </div>
         </div>
       </section>
-    );
+    )
   }
 
   return (
@@ -55,11 +55,13 @@ const Teachers = () => {
           {teachers.map((teacher) => (
             <Card key={teacher.id} className="text-center">
               {teacher.image_url && (
-                <img
-                  src={teacher.image_url}
-                  alt={teacher.name}
-                  className="w-32 h-32 rounded-full mx-auto mb-4 object-cover"
-                />
+                <div className="p-6 pb-0">
+                  <img
+                    src={teacher.image_url}
+                    alt={teacher.name}
+                    className="w-32 h-32 rounded-full mx-auto mb-4 object-cover"
+                  />
+                </div>
               )}
               <div className="p-6">
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
@@ -83,7 +85,7 @@ const Teachers = () => {
         )}
       </div>
     </section>
-  );
-};
+  )
+}
 
 export default Teachers

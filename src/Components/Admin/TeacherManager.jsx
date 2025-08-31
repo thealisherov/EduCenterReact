@@ -2,13 +2,13 @@ import React, { useState } from 'react'
 import { Plus, Edit, Trash2, X } from 'lucide-react'
 import { supabase } from '../../services/supabase'
 
-const CourseManager = ({ courses, onUpdate }) => {
+const TeacherManager = ({ teachers, onUpdate }) => {
   const [showAddModal, setShowAddModal] = useState(false)
-  const [editingCourse, setEditingCourse] = useState(null)
-  const [newCourse, setNewCourse] = useState({
-    title: '',
-    description: '',
-    price: '',
+  const [editingTeacher, setEditingTeacher] = useState(null)
+  const [newTeacher, setNewTeacher] = useState({
+    name: '',
+    profession: '',
+    experience: '',
     image_url: ''
   })
   const [imageFile, setImageFile] = useState(null)
@@ -19,85 +19,84 @@ const CourseManager = ({ courses, onUpdate }) => {
     setUploading(true)
 
     try {
-      let imageUrl = newCourse.image_url
+      let imageUrl = newTeacher.image_url
 
       // Agar yangi rasm yuklangan bo'lsa
       if (imageFile) {
         const fileExt = imageFile.name.split('.').pop()
-        const fileName = `course-${Date.now()}.${fileExt}`
+        const fileName = `teacher-${Date.now()}.${fileExt}`
         
         const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('courses')
+          .from('teachers')
           .upload(fileName, imageFile)
 
         if (uploadError) throw uploadError
 
         const { data: { publicUrl } } = supabase.storage
-          .from('courses')
+          .from('teachers')
           .getPublicUrl(fileName)
 
         imageUrl = publicUrl
       }
 
-      const courseData = {
-        ...newCourse,
-        image_url: imageUrl,
-        price: parseFloat(newCourse.price)
+      const teacherData = {
+        ...newTeacher,
+        image_url: imageUrl
       }
 
-      if (editingCourse) {
-        // Update existing course
+      if (editingTeacher) {
+        // Update existing teacher
         const { error } = await supabase
-          .from('courses')
-          .update(courseData)
-          .eq('id', editingCourse.id)
+          .from('teachers')
+          .update(teacherData)
+          .eq('id', editingTeacher.id)
 
         if (error) throw error
       } else {
-        // Add new course
+        // Add new teacher
         const { error } = await supabase
-          .from('courses')
-          .insert([courseData])
+          .from('teachers')
+          .insert([teacherData])
 
         if (error) throw error
       }
 
       // Reset form
-      setNewCourse({ title: '', description: '', price: '', image_url: '' })
+      setNewTeacher({ name: '', profession: '', experience: '', image_url: '' })
       setImageFile(null)
       setShowAddModal(false)
-      setEditingCourse(null)
+      setEditingTeacher(null)
       onUpdate()
     } catch (error) {
-      console.error('Course save error:', error)
-      alert('Kursni saqlashda xatolik yuz berdi')
+      console.error('Teacher save error:', error)
+      alert('O\'qituvchini saqlashda xatolik yuz berdi')
     } finally {
       setUploading(false)
     }
   }
 
-  const handleEdit = (course) => {
-    setEditingCourse(course)
-    setNewCourse({
-      title: course.title,
-      description: course.description || '',
-      price: course.price.toString(),
-      image_url: course.image_url || ''
+  const handleEdit = (teacher) => {
+    setEditingTeacher(teacher)
+    setNewTeacher({
+      name: teacher.name,
+      profession: teacher.profession || '',
+      experience: teacher.experience || '',
+      image_url: teacher.image_url || ''
     })
     setShowAddModal(true)
   }
 
-  const handleDelete = async (courseId) => {
-    if (!confirm('Kursni o\'chirmoqchimisiz?')) return
+  const handleDelete = async (teacherId) => {
+    if (!confirm('O\'qituvchini o\'chirmoqchimisiz?')) return
 
     const { error } = await supabase
-      .from('courses')
+      .from('teachers')
       .delete()
-      .eq('id', courseId)
+      .eq('id', teacherId)
 
     if (error) {
-      console.error('Course delete error:', error)
-      alert('Kursni o\'chirishda xatolik yuz berdi')
+      console.error('Teacher delete error:', error)
+      alert('O\'qituvchini o\'chirishda xatolik yuz berdi')
     } else {
       onUpdate()
     }
@@ -110,7 +109,7 @@ const CourseManager = ({ courses, onUpdate }) => {
       // Preview uchun
       const reader = new FileReader()
       reader.onload = (e) => {
-        setNewCourse(prev => ({ ...prev, image_url: e.target.result }))
+        setNewTeacher(prev => ({ ...prev, image_url: e.target.result }))
       }
       reader.readAsDataURL(file)
     }
@@ -119,45 +118,43 @@ const CourseManager = ({ courses, onUpdate }) => {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Kurslar boshqaruvi</h2>
+        <h2 className="text-2xl font-bold">O'qituvchilar boshqaruvi</h2>
         <button
           onClick={() => setShowAddModal(true)}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
         >
           <Plus className="h-4 w-4" />
-          <span>Yangi kurs</span>
+          <span>Yangi o'qituvchi</span>
         </button>
       </div>
 
-      {/* Courses List */}
+      {/* Teachers List */}
       <div className="grid gap-4">
-        {courses.map((course) => (
-          <div key={course.id} className="bg-white border rounded-lg p-4 flex items-center justify-between">
+        {teachers.map((teacher) => (
+          <div key={teacher.id} className="bg-white border rounded-lg p-4 flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              {course.image_url && (
+              {teacher.image_url && (
                 <img
-                  src={course.image_url}
-                  alt={course.title}
-                  className="w-16 h-16 object-cover rounded-lg"
+                  src={teacher.image_url}
+                  alt={teacher.name}
+                  className="w-16 h-16 object-cover rounded-full"
                 />
               )}
               <div>
-                <h3 className="font-semibold">{course.title}</h3>
-                <p className="text-gray-600">{new Intl.NumberFormat('uz-UZ').format(course.price)} so'm</p>
-                {course.description && (
-                  <p className="text-sm text-gray-500 line-clamp-2">{course.description}</p>
-                )}
+                <h3 className="font-semibold">{teacher.name}</h3>
+                <p className="text-blue-600 font-medium">{teacher.profession}</p>
+                <p className="text-gray-600 text-sm">{teacher.experience}</p>
               </div>
             </div>
             <div className="flex space-x-2">
               <button
-                onClick={() => handleEdit(course)}
+                onClick={() => handleEdit(teacher)}
                 className="p-2 text-blue-600 hover:bg-blue-50 rounded"
               >
                 <Edit className="h-4 w-4" />
               </button>
               <button
-                onClick={() => handleDelete(course.id)}
+                onClick={() => handleDelete(teacher.id)}
                 className="p-2 text-red-600 hover:bg-red-50 rounded"
               >
                 <Trash2 className="h-4 w-4" />
@@ -173,13 +170,13 @@ const CourseManager = ({ courses, onUpdate }) => {
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 max-h-screen overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">
-                {editingCourse ? 'Kursni tahrirlash' : 'Yangi kurs qo\'shish'}
+                {editingTeacher ? 'O\'qituvchini tahrirlash' : 'Yangi o\'qituvchi qo\'shish'}
               </h3>
               <button
                 onClick={() => {
                   setShowAddModal(false)
-                  setEditingCourse(null)
-                  setNewCourse({ title: '', description: '', price: '', image_url: '' })
+                  setEditingTeacher(null)
+                  setNewTeacher({ name: '', profession: '', experience: '', image_url: '' })
                   setImageFile(null)
                 }}
                 className="text-gray-500 hover:text-gray-700"
@@ -190,34 +187,34 @@ const CourseManager = ({ courses, onUpdate }) => {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Kurs nomi</label>
+                <label className="block text-sm font-medium mb-1">F.I.SH</label>
                 <input
                   type="text"
-                  value={newCourse.title}
-                  onChange={(e) => setNewCourse(prev => ({ ...prev, title: e.target.value }))}
+                  value={newTeacher.name}
+                  onChange={(e) => setNewTeacher(prev => ({ ...prev, name: e.target.value }))}
                   className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Tavsif</label>
+                <label className="block text-sm font-medium mb-1">Mutaxassisligi</label>
+                <input
+                  type="text"
+                  value={newTeacher.profession}
+                  onChange={(e) => setNewTeacher(prev => ({ ...prev, profession: e.target.value }))}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Tajriba</label>
                 <textarea
-                  value={newCourse.description}
-                  onChange={(e) => setNewCourse(prev => ({ ...prev, description: e.target.value }))}
+                  value={newTeacher.experience}
+                  onChange={(e) => setNewTeacher(prev => ({ ...prev, experience: e.target.value }))}
                   className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   rows="3"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Narxi (so'm)</label>
-                <input
-                  type="number"
-                  value={newCourse.price}
-                  onChange={(e) => setNewCourse(prev => ({ ...prev, price: e.target.value }))}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
                 />
               </div>
 
@@ -229,11 +226,11 @@ const CourseManager = ({ courses, onUpdate }) => {
                   onChange={handleFileChange}
                   className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                {newCourse.image_url && (
+                {newTeacher.image_url && (
                   <img
-                    src={newCourse.image_url}
+                    src={newTeacher.image_url}
                     alt="Preview"
-                    className="mt-2 w-full h-32 object-cover rounded-lg"
+                    className="mt-2 w-24 h-24 object-cover rounded-full mx-auto"
                   />
                 )}
               </div>
@@ -244,14 +241,14 @@ const CourseManager = ({ courses, onUpdate }) => {
                   disabled={uploading}
                   className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 >
-                  {uploading ? 'Saqlanmoqda...' : (editingCourse ? 'Yangilash' : 'Qo\'shish')}
+                  {uploading ? 'Saqlanmoqda...' : (editingTeacher ? 'Yangilash' : 'Qo\'shish')}
                 </button>
                 <button
                   type="button"
                   onClick={() => {
                     setShowAddModal(false)
-                    setEditingCourse(null)
-                    setNewCourse({ title: '', description: '', price: '', image_url: '' })
+                    setEditingTeacher(null)
+                    setNewTeacher({ name: '', profession: '', experience: '', image_url: '' })
                     setImageFile(null)
                   }}
                   className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
@@ -267,4 +264,4 @@ const CourseManager = ({ courses, onUpdate }) => {
   )
 }
 
-export default CourseManager
+export default TeacherManager

@@ -1,32 +1,31 @@
-import React from 'react'
-import { useEffect, useState } from 'react';
-import { resultsAPI } from '../../services/api';
-import Card from '../UI/Card';
+import React, { useState, useEffect } from 'react'
+import { supabase } from '../../services/supabase'
+import Card from '../UI/Card'
 
 const Results = () => {
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [results, setResults] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchResults();
-  }, []);
+    fetchResults()
+  }, [])
 
   const fetchResults = async () => {
     try {
       const { data, error } = await supabase
         .from('results')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
       
       if (!error) {
-        setResults(data || []);
+        setResults(data || [])
       }
     } catch (err) {
-      console.error('Results fetch error:', err);
+      console.error('Results fetch error:', err)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   if (loading) {
     return (
@@ -37,7 +36,7 @@ const Results = () => {
           </div>
         </div>
       </section>
-    );
+    )
   }
 
   return (
@@ -58,14 +57,20 @@ const Results = () => {
               {result.image_url && (
                 <img
                   src={result.image_url}
-                  alt={result.title}
+                  alt={result.certificate_title}
                   className="w-full h-64 object-cover"
                 />
               )}
               <div className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 text-center">
-                  {result.title}
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {result.student_name}
                 </h3>
+                <p className="text-blue-600 font-medium mb-2">
+                  {result.certificate_title}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {new Date(result.created_at).toLocaleDateString('uz-UZ')}
+                </p>
               </div>
             </Card>
           ))}
@@ -78,10 +83,7 @@ const Results = () => {
         )}
       </div>
     </section>
-  );
-};
-
-
-
+  )
+}
 
 export default Results

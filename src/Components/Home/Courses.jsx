@@ -1,29 +1,31 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
+import { supabase } from '../../services/supabase'
+import Card from '../UI/Card'
 
 const Courses = () => {
-  const [courses, setCourses] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [courses, setCourses] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchCourses();
-  }, []);
+    fetchCourses()
+  }, [])
 
   const fetchCourses = async () => {
     try {
       const { data, error } = await supabase
         .from('courses')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
       
       if (!error) {
-        setCourses(data || []);
+        setCourses(data || [])
       }
     } catch (err) {
-      console.error('Courses fetch error:', err);
+      console.error('Courses fetch error:', err)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   if (loading) {
     return (
@@ -34,7 +36,7 @@ const Courses = () => {
           </div>
         </div>
       </section>
-    );
+    )
   }
 
   return (
@@ -63,9 +65,12 @@ const Courses = () => {
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
                   {course.title}
                 </h3>
+                {course.description && (
+                  <p className="text-gray-600 mb-4 line-clamp-3">{course.description}</p>
+                )}
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold text-blue-600">
-                    {course.price}
+                    {new Intl.NumberFormat('uz-UZ').format(course.price)} so'm
                   </span>
                   <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
                     Batafsil
@@ -83,6 +88,7 @@ const Courses = () => {
         )}
       </div>
     </section>
-  );
-};
+  )
+}
+
 export default Courses
