@@ -1,7 +1,13 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = 'https://ukkmynebzbrktkpjqxii.supabase.co'
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVra215bmViemJya3RrcGpxeGlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1MzQ5NTEsImV4cCI6MjA3MjExMDk1MX0.zsM_wd0W3Cb-hJufnVfxtAdnsGOKY1_bSlyRluvgvSU'
+// Environment variables dan olish
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+// Konfiguratsiya mavjudligini tekshirish
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Supabase konfiguratsiyasi topilmadi. .env faylini tekshiring.')
+}
 
 export const supabase = createClient(supabaseUrl, supabaseKey)
 
@@ -58,4 +64,10 @@ export const getPublicUrl = (bucket, path) => {
     .getPublicUrl(path)
   
   return publicUrl
+}
+
+// Default credentials (faqat development uchun)
+export const DEFAULT_CREDENTIALS = {
+  email: import.meta.env.VITE_DEFAULT_ADMIN_EMAIL || 'admin@oquvmarkazi.uz',
+  password: import.meta.env.VITE_DEFAULT_ADMIN_PASSWORD || 'Admin123!'
 }

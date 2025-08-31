@@ -13,14 +13,24 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
+  const [userProfile, setUserProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     // Get initial session
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user || null)
-      setLoading(false)
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        setUser(session?.user || null)
+        
+        if (session?.user) {
+          await fetchUserProfile(session.user.id)
+        }
+      } catch (error) {
+        console.error('Session fetch error:', error)
+      } finally {
+        setLoading(false)
+      }
     }
 
     getSession()
@@ -29,6 +39,13 @@ export const AuthProvider = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setUser(session?.user || null)
+        
+        if (session?.user) {
+          await fetchUserProfile(session.user.id)
+        } else {
+          setUserProfile(null)
+        }
+        
         setLoading(false)
       }
     )
@@ -36,12 +53,30 @@ export const AuthProvider = ({ children }) => {
     return () => subscription?.unsubscribe()
   }, [])
 
+  const fetchUserProfile = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
+      
+      if (!error) {
+        setUserProfile(data)
+      }
+    } catch (error) {
+      console.error('Profile fetch error:', error)
+    }
+  }
+
   const signIn = async (email, password) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       })
+
+      
       
       if (error) throw error
       
@@ -73,6 +108,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
+      setUserProfile(null)
     } catch (error) {
       console.error('Sign out error:', error)
     }
@@ -91,15 +127,22 @@ export const AuthProvider = ({ children }) => {
       return { error }
     }
   }
-
-  const isAdmin = () => {
-    // Admin emails ro'yxati yoki user metadata orqali tekshirish
-    const adminEmails = ['admin@oquvmarkazi.uz', 'admin@gmail.com']
-    return user && adminEmails.includes(user.email)
+const isAdmin = () => {
+  // Profile dan admin tekshirish yoki email orqali
+  if (userProfile?.role === 'admin') {
+    return true
   }
-
+  
+  // Fallback: email orqali tekshirish
+  const adminEmails = [
+    import.meta.env.VITE_DEFAULT_ADMIN_EMAIL || 'azizalisherov0826@gmail.com',
+    'admin@oquvmarkazi.uz'
+  ]
+  return user && adminEmails.includes(user.email)
+}
   const value = {
     user,
+    userProfile,
     loading,
     signIn,
     signUp,

@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
-import { X, Eye, EyeOff } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { X, Eye, EyeOff, Info } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
+import { DEFAULT_CREDENTIALS } from '../../services/supabase'
 
 const LoginModal = ({ isOpen, onClose }) => {
   const [email, setEmail] = useState('')
@@ -8,8 +9,17 @@ const LoginModal = ({ isOpen, onClose }) => {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showDefaults, setShowDefaults] = useState(false)
   
   const { signIn } = useAuth()
+
+  // Default credentials ni avtomatik to'ldirish (development mode)
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      setEmail(DEFAULT_CREDENTIALS.email)
+      setPassword(DEFAULT_CREDENTIALS.password)
+    }
+  }, [isOpen])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -20,7 +30,9 @@ const LoginModal = ({ isOpen, onClose }) => {
       const { data, error: signInError } = await signIn(email, password)
       
       if (signInError) {
-        setError(signInError.message)
+        setError(signInError.message === 'Invalid login credentials' 
+          ? 'Email yoki parol noto\'g\'ri' 
+          : signInError.message)
       } else {
         // Login successful
         onClose()
@@ -40,7 +52,13 @@ const LoginModal = ({ isOpen, onClose }) => {
     setPassword('')
     setError('')
     setShowPassword(false)
+    setShowDefaults(false)
     onClose()
+  }
+
+  const fillDefaults = () => {
+    setEmail(DEFAULT_CREDENTIALS.email)
+    setPassword(DEFAULT_CREDENTIALS.password)
   }
 
   if (!isOpen) return null
@@ -57,6 +75,28 @@ const LoginModal = ({ isOpen, onClose }) => {
             <X className="h-6 w-6" />
           </button>
         </div>
+
+        {/* Development mode - default credentials hint */}
+        {import.meta.env.DEV && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-start space-x-2">
+              <Info className="h-4 w-4 text-blue-600 mt-0.5" />
+              <div className="text-sm">
+                <p className="text-blue-800 font-medium">Development Mode</p>
+                <p className="text-blue-700">
+                  Test uchun: 
+                  <button 
+                    type="button"
+                    onClick={fillDefaults}
+                    className="ml-2 text-blue-600 underline hover:text-blue-800"
+                  >
+                    Default ma'lumotlarni to'ldirish
+                  </button>
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
