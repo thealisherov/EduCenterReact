@@ -1,4 +1,6 @@
 import React from 'react'
+import { useAuth } from '../../hooks/useAuth';
+import Navbar from './Navbar';
 const Header = () => {
   const { user, isAdmin, signOut } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);

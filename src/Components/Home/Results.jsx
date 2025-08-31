@@ -1,4 +1,7 @@
 import React from 'react'
+import { useEffect, useState } from 'react';
+import { resultsAPI } from '../../services/api';
+import Card from '../UI/Card';
 
 const Results = () => {
   const [results, setResults] = useState([]);

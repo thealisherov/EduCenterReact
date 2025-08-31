@@ -1,5 +1,7 @@
 import React from 'react'
-
+import { useEffect, useState } from 'react';
+import { teachersAPI } from '../../services/api';
+import Card from '../UI/Card';
 const Teachers = () => {
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
